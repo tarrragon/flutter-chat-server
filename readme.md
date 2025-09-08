@@ -27,19 +27,17 @@
 brew install go
 ```
 
-### 2. 創建項目結構
+### 2. 克隆專案
 
 ```bash
-mkdir flutter-chat-server
+git clone <repository-url>
 cd flutter-chat-server
-go mod init flutter-chat-server
 ```
 
 ### 3. 安裝依賴
 
 ```bash
-go get github.com/gorilla/mux
-go get github.com/gorilla/websocket
+go mod tidy
 ```
 
 ### 4. 運行服務器
