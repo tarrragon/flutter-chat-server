@@ -1,0 +1,66 @@
+# Go 編譯檔案
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 測試二進制檔，用 go test -c 建立
+*.test
+
+# 輸出的二進制檔案
+flutter-chat-server
+flutter-chat-server.exe
+
+# Go 相關的覆蓋檔案
+*.out
+
+# 依賴管理相關
+go.sum
+
+# IDE 和編輯器檔案
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS 系統檔案
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 日誌檔案
+*.log
+*.txt
+
+# 暫存檔案
+tmp/
+temp/
+cache/
+
+# 測試輸出
+test_output.txt
+server_output.txt
+
+# 備份檔案
+*.bak
+*.backup
+*.old
+
+# 環境設定檔（如果有的話）
+.env
+.env.local
+.env.production
+
+# 運行時檔案
+pid.file
+*.pid
+
+# 調試檔案
+debug
+*.pprof
