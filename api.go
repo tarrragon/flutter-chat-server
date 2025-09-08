@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -45,33 +44,9 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 返回指定 channel 的消息，如果沒有則返回歡迎消息
-	channelMessages := messageStore[channel]
-	if len(channelMessages) == 0 {
-		log.Printf("channel %s 的 messageStore 為空，返回歡迎訊息", channel)
-		welcomeMessages := []Message{
-			{
-				ID:        "welcome",
-				User:      "System",
-				Content:   fmt.Sprintf(WelcomeMessageTemplate, channel),
-				Timestamp: time.Now(),
-				Type:      MessageTypeSystem,
-				Channel:   channel,
-			},
-		}
-		json.NewEncoder(w).Encode(welcomeMessages)
-		return
-	}
-
-	// 返回最近的消息（限制數量避免一次返回太多）
-	limit := DefaultHistoryLimit
-	start := 0
-	if len(channelMessages) > limit {
-		start = len(channelMessages) - limit
-	}
-
-	recentMessages := channelMessages[start:]
-	log.Printf("返回 channel %s 的 %d 條訊息 (總共 %d 條)", channel, len(recentMessages), len(channelMessages))
+	// 使用新的便利方法獲取最近訊息
+	recentMessages := messageStore.GetRecentMessages(channel, DefaultHistoryLimit)
+	log.Printf("返回 channel %s 的 %d 條訊息 (總共 %d 條)", channel, len(recentMessages), messageStore.GetChannelMessageCount(channel))
 	json.NewEncoder(w).Encode(recentMessages)
 }
 
@@ -133,7 +108,7 @@ func sendMessage(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("解析到訊息: %+v", msg)
 
-	msg.ID = fmt.Sprintf("%d_%d", time.Now().Unix(), time.Now().UnixNano())
+	msg.ID = generateMessageID()
 	msg.Timestamp = time.Now()
 
 	// 如果沒有指定用戶名，設定為預設值
@@ -142,11 +117,8 @@ func sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 儲存訊息到對應 channel 的 messageStore
-	if messageStore[msg.Channel] == nil {
-		messageStore[msg.Channel] = []Message{}
-	}
-	messageStore[msg.Channel] = append(messageStore[msg.Channel], msg)
-	log.Printf("訊息已儲存到 channel %s，該頻道目前共有 %d 條訊息", msg.Channel, len(messageStore[msg.Channel]))
+	messageStore.AddMessage(msg)
+	log.Printf("訊息已儲存到 channel %s，該頻道目前共有 %d 條訊息", msg.Channel, messageStore.GetChannelMessageCount(msg.Channel))
 
 	// 先回應客戶端
 	log.Printf("準備回應客戶端")

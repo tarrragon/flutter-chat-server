@@ -21,7 +21,7 @@ import (
 // - 各模組透過這些變數進行資料存取和通訊
 var (
 	// messageStore 按 channel 分類存儲訊息
-	messageStore = make(map[string][]Message)
+	messageStore = make(MessageStore)
 
 	// hub WebSocket 連接管理中心
 	hub = Hub{

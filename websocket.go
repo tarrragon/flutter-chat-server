@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -108,16 +107,13 @@ func (c *Client) readPump() {
 			break
 		}
 
-		msg.ID = fmt.Sprintf("%d_%d", time.Now().Unix(), time.Now().UnixNano())
+		msg.ID = generateMessageID()
 		msg.Timestamp = time.Now()
 		msg.User = c.username
 		msg.Channel = c.channel
 
 		// 儲存訊息到對應 channel 的 messageStore
-		if messageStore[c.channel] == nil {
-			messageStore[c.channel] = []Message{}
-		}
-		messageStore[c.channel] = append(messageStore[c.channel], msg)
+		messageStore.AddMessage(msg)
 
 		// 廣播訊息到所有客戶端
 		hub.broadcast <- msg
@@ -148,13 +144,10 @@ func (c *Client) readPump() {
 func (c *Client) writePump() {
 	defer c.conn.Close()
 
-	for {
-		select {
-		case message := <-c.send:
-			if err := c.conn.WriteJSON(message); err != nil {
-				log.Printf(LogWriteJSONError, err)
-				return
-			}
+	for message := range c.send {
+		if err := c.conn.WriteJSON(message); err != nil {
+			log.Printf(LogWriteJSONError, err)
+			return
 		}
 	}
 }
@@ -190,20 +183,10 @@ func (h *Hub) run() {
 			log.Printf(LogUserConnected, client.username, client.channel)
 
 			// 發送歡迎消息
-			welcomeMsg := Message{
-				ID:        fmt.Sprintf("%d_%d", time.Now().Unix(), time.Now().UnixNano()),
-				User:      "System",
-				Content:   fmt.Sprintf(SystemMessageJoinTemplate, client.username, client.channel),
-				Timestamp: time.Now(),
-				Type:      MessageTypeSystem,
-				Channel:   client.channel,
-			}
+			welcomeMsg := NewJoinMessage(client.username, client.channel)
 
 			// 儲存系統訊息到對應 channel
-			if messageStore[client.channel] == nil {
-				messageStore[client.channel] = []Message{}
-			}
-			messageStore[client.channel] = append(messageStore[client.channel], welcomeMsg)
+			messageStore.AddMessage(welcomeMsg)
 			h.broadcast <- welcomeMsg
 
 		case client := <-h.unregister:
@@ -213,19 +196,9 @@ func (h *Hub) run() {
 				log.Printf(LogUserDisconnected, client.username, client.channel)
 
 				// 發送離線消息
-				leaveMsg := Message{
-					ID:        fmt.Sprintf("%d_%d", time.Now().Unix(), time.Now().UnixNano()),
-					User:      "System",
-					Content:   fmt.Sprintf(SystemMessageLeaveTemplate, client.username, client.channel),
-					Timestamp: time.Now(),
-					Type:      MessageTypeSystem,
-					Channel:   client.channel,
-				}
+				leaveMsg := NewLeaveMessage(client.username, client.channel)
 				// 儲存系統訊息到對應 channel
-				if messageStore[client.channel] == nil {
-					messageStore[client.channel] = []Message{}
-				}
-				messageStore[client.channel] = append(messageStore[client.channel], leaveMsg)
+				messageStore.AddMessage(leaveMsg)
 				h.broadcast <- leaveMsg
 			}
 

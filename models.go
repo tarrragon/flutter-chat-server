@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -25,36 +23,6 @@ type Account struct {
 	Channel  string `json:"channel"`  // 所屬頻道
 }
 
-// Message 代表聊天訊息
-//
-// Responsible for:
-// - 存儲單條聊天訊息的完整資訊
-// - 支援不同類型的訊息（文字、系統通知等）
-// - 提供時間戳記和頻道分類
-//
-// Design considerations:
-// - ID 使用字串格式以支援複合 ID（時間戳 + 毫秒）
-// - Type 欄位預留擴展性，支援未來的多媒體訊息
-// - Channel 欄位確保訊息的頻道隔離
-//
-// Process flow:
-// 1. 建立訊息物件時自動設置 ID 和時間戳
-// 2. 根據來源設置 User 欄位（WebSocket 用戶或 API 用戶）
-// 3. 按 Channel 分類存儲到對應的訊息存儲中
-// 4. 廣播給相同頻道的所有客戶端
-//
-// Usage context:
-// - WebSocket 接收訊息時建立
-// - REST API 接收訊息時建立
-// - 載入歷史訊息時從存儲中讀取
-type Message struct {
-	ID        string    `json:"id"`        // 訊息唯一識別碼
-	User      string    `json:"user"`      // 發送者用戶名
-	Content   string    `json:"content"`   // 訊息內容
-	Timestamp time.Time `json:"timestamp"` // 發送時間
-	Type      string    `json:"type"`      // 訊息類型（text, system, image, file）
-	Channel   string    `json:"channel"`   // 所屬頻道
-}
 
 // Client 代表 WebSocket 客戶端連接
 //
